@@ -1,13 +1,10 @@
+TARGET := trustcache
+
 OBJS = trustcache.o
 OBJS += append.o create.o info.o remove.o
 OBJS += machoparse/cdhash.o cache_from_tree.o sort.o
 OBJS += uuid/gen_uuid.o uuid/pack.o uuid/unpack.o uuid/parse.o uuid/unparse.o uuid/copy.o
 OBJS += compat_strtonum.o
-
-DESTDIR ?=
-PREFIX  ?= ~/.local
-BINDIR  ?= $(DESTDIR)$(PREFIX)/bin
-MANDIR  ?= $(DESTDIR)$(PREFIX)/share/man
 
 ifeq ($(shell uname -s),Darwin)
 	COMMONCRYPTO ?= 1
@@ -19,24 +16,22 @@ else
 	LIBS   += -lcrypto
 endif
 
-all: trustcache
+SIGN  := ldid -S
+STRIP := strip -rSx -no_code_signature_warning
 
-install: trustcache trustcache.1
-	install -d $(BINDIR)
-	install -m 755 trustcache $(BINDIR)/
-	install -d $(MANDIR)/man1/
-	install -m 644 trustcache.1 $(MANDIR)/man1/
+all: $(TARGET) cdhash
 
-uninstall:
-	rm -i $(BINDIR)/trustcache $(MANDIR)/man1/trustcache.1
-
-trustcache: $(OBJS)
+$(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) -o $@ $(LIBS)
+	$(STRIP) $(TARGET)
+	$(SIGN) $(TARGET)
 
-README.txt: trustcache.1
-	mandoc $^ | col -bx > $@
+cdhash: machoparse/cdhash.c
+	$(CC) $(CFLAGS) -DMAIN $^ -o $@ $(LIBS)
+	$(STRIP) cdhash
+	$(SIGN) cdhash
 
 clean:
-	rm -f trustcache $(OBJS)
+	rm -f $(TARGET) $(OBJS) cdhash
 
-.PHONY: all clean install uninstall
+.PHONY: all clean
