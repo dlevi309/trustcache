@@ -459,21 +459,23 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    struct cdhashes cdhashes;
-    cdhashes.count = 0;
-    struct stat sb;
-    if (stat(argv[1], &sb) != 0) {
-        fprintf(stderr, "Could not stat \"%s\"\n", argv[1]);
-        return 1;
-    }
-    find_cdhash(argv[1], &sb, &cdhashes);
-    if (cdhashes.count == 0)
-        return 1;
-    for (int i = 0; i < cdhashes.count; i++) {
-        for (int j = 0; j < CS_CDHASH_LEN; j++) {
-            printf("%02x", cdhashes.h[i].cdhash[j]);
+    for (int a = 1; a < argc; a++) {
+        struct cdhashes cdhashes;
+        cdhashes.count = 0;
+        struct stat sb;
+        if (stat(argv[a], &sb) != 0) {
+            fprintf(stderr, "Could not stat \"%s\"\n", argv[a]);
+            return 1;
         }
-        printf("\n");
+        find_cdhash(argv[a], &sb, &cdhashes);
+        if (cdhashes.count == 0)
+            return 1;
+        for (int i = 0; i < cdhashes.count; i++) {
+            for (int j = 0; j < CS_CDHASH_LEN; j++) {
+                printf("%02x", cdhashes.h[i].cdhash[j]);
+            }
+            printf("\n");
+        }
     }
     return 0;
 }
